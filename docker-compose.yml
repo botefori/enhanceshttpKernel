@@ -1,0 +1,62 @@
+version: '2.0'
+
+services:
+    proxy:
+        image: jwilder/nginx-proxy
+        volumes:
+            - "/var/run/docker.sock:/tmp/docker.sock:ro"
+
+    api:
+        build: docker/php70
+        image: elior-viparis/php70
+        env_file: ./.env
+        volumes:
+          - ./api:/var/www/html
+        environment:
+            VIRTUAL_HOST: api.eliorviparis.docker
+            DOMAIN_NAME: api.eliorviparis.docker
+        depends_on:
+          - database
+          - elasticsearch
+          - mock-atos
+
+    mock-atos:
+        image: php:7.0-cli
+        working_dir: /app
+        command: php -S 0.0.0.0:80 index.php
+        volumes:
+            - "./docker/mock-atos:/app"
+
+    mock-salesforce:
+        image: php:7.0-cli
+        working_dir: /app
+        command: php -S 0.0.0.0:80 index.php
+        volumes:
+            - "./docker/mock-salesforce:/app"
+
+    database:
+        image: mariadb:10.1
+        environment:
+             MYSQL_ROOT_PASSWORD: root
+             MYSQL_DATABASE: wynd_api
+
+    elasticsearch:
+         build: docker/elasticsearch
+
+    phpmyadmin:
+         image: phpmyadmin/phpmyadmin
+         environment:
+            MYSQL_ROOT_PASSWORD: root
+            PMA_HOST: database
+            VIRTUAL_HOST: phpmyadmin.eliorviparis.docker
+            DOMAIN_NAME: phpmyadmin.eliorviparis.docker
+         depends_on:
+           - database
+
+    elasticsearch:
+        image: docker.elastic.co/elasticsearch/elasticsearch:5.3.0
+        volumes:
+            - ./docker/elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+        environment:
+            - "http.host=0.0.0.0"
+            - "transport.host=127.0.0.1"

@@ -1,0 +1,14 @@
+version: '2.0'
+
+services:
+  database:
+      volumes:
+        -  "database:/var/lib/mysql"
+
+  api:
+      volumes:
+        - ~/.ssh:/var/www/.ssh
+        - ~/.composer:/var/www/.composer
+
+volumes:
+  database:
